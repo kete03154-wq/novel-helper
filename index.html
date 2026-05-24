@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>AI 长篇小说创作</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 10px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h2 { margin-top: 0; }
+        textarea, input[type="text"], input[type="number"], input[type="file"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 6px 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        button {
+            background: #007aff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        pre {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <h1>📖 AI 长篇小说创作助手</h1>
+
+    <div class="card">
+        <h2>✍️ 生成章节</h2>
+        章节号：<input type="number" id="ch" value="1"><br>
+        标题：<input type="text" id="title" placeholder="章节标题"><br>
+        梗概：<textarea id="outline" rows="3" placeholder="简要描述本章内容..."></textarea><br>
+        模仿作家（可选）：<input type="text" id="author_style" placeholder="例如：金庸"><br>
+        <button onclick="generateChapter()">生成章节</button>
+        <h3>结果：</h3>
+        <pre id="gen_result"></pre>
+    </div>
+
+    <div class="card">
+        <h2>✨ 润色文本</h2>
+        <textarea id="polish_content" rows="5" placeholder="粘贴需要润色的文本"></textarea>
+        强度 (0-1)：<input type="number" id="polish_intensity" value="0.5" step="0.1" min="0" max="1"><br>
+        <button onclick="polishText()">润色</button>
+        <pre id="polish_result"></pre>
+    </div>
+
+    <div class="card">
+        <h2>🔍 拆书分析</h2>
+        <input type="file" id="book_file"><br>
+        <button onclick="dissectBook()">分析</button>
+        <pre id="dissect_result"></pre>
+    </div>
+
+    <div class="card">
+        <h2>📦 导出项目</h2>
+        格式：
+        <select id="export_fmt">
+            <option value="md">Markdown</option>
+            <option value="pdf">PDF</option>
+            <option value="docx">DOCX</option>
+            <option value="package">ZIP 打包</option>
+        </select>
+        <button onclick="exportNovel()">导出</button>
+        <p id="export_msg"></p>
+    </div>
+
+    <div class="card">
+        <h2>📊 项目状态</h2>
+        <button onclick="getStatus()">刷新状态</button>
+        <pre id="status_result"></pre>
+    </div>
+
+    <script>
+        async function generateChapter() {
+            let form = new FormData();
+            form.append("ch", document.getElementById("ch").value);
+            form.append("title", document.getElementById("title").value);
+            form.append("outline", document.getElementById("outline").value);
+            form.append("author_style", document.getElementById("author_style").value);
+            let resp = await fetch("/generate_chapter", {method: "POST", body: form});
+            let data = await resp.json();
+            document.getElementById("gen_result").textContent = JSON.stringify(data, null, 2);
+        }
+
+        async function polishText() {
+            let form = new FormData();
+            form.append("content", document.getElementById("polish_content").value);
+            form.append("intensity", document.getElementById("polish_intensity").value);
+            let resp = await fetch("/polish", {method: "POST", body: form});
+            let data = await resp.json();
+            document.getElementById("polish_result").textContent = JSON.stringify(data, null, 2);
+        }
+
+        async function dissectBook() {
+            let fileInput = document.getElementById("book_file");
+            let form = new FormData();
+            form.append("file", fileInput.files[0]);
+            let resp = await fetch("/dissect", {method: "POST", body: form});
+            let data = await resp.json();
+            document.getElementById("dissect_result").textContent = JSON.stringify(data, null, 2);
+        }
+
+        function exportNovel() {
+            let fmt = document.getElementById("export_fmt").value;
+            window.open("/export/" + fmt, "_blank");
+        }
+
+        async function getStatus() {
+            let resp = await fetch("/status");
+            let data = await resp.json();
+            document.getElementById("status_result").textContent = JSON.stringify(data, null, 2);
+        }
+    </script>
+</body>
+</html>
